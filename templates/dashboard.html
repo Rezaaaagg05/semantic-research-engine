@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>
+Research Dashboard
+</title>
+
+
+<style>
+
+body{
+    font-family: Arial;
+    margin:40px;
+}
+
+
+.card{
+
+    border:1px solid #ddd;
+    padding:20px;
+    margin-bottom:20px;
+
+}
+
+
+table{
+
+width:100%;
+border-collapse:collapse;
+
+}
+
+
+td,th{
+
+border:1px solid #ddd;
+padding:10px;
+
+}
+
+
+</style>
+
+
+</head>
+
+
+
+<body>
+
+
+<h1>
+Research Dashboard
+</h1>
+
+
+<div class="card">
+
+<h2>
+Total Papers:
+{{ total }}
+</h2>
+
+</div>
+
+
+
+<table>
+
+
+<tr>
+
+<th>
+Title
+</th>
+
+<th>
+Year
+</th>
+
+<th>
+Citation
+</th>
+
+<th>
+Keyword
+</th>
+
+
+</tr>
+
+
+
+{% for paper in papers %}
+
+
+<tr>
+
+
+<td>
+
+{{paper.title}}
+
+</td>
+
+
+<td>
+
+{{paper.year}}
+
+</td>
+
+
+<td>
+
+{{paper.citation_count}}
+
+</td>
+
+
+<td>
+
+{{paper.keyword}}
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</table>
+
+
+
+</body>
+
+
+</html>

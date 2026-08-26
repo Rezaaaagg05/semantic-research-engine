@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>
+Semantic Scholar Search
+</title>
+
+</head>
+
+
+<body>
+
+
+<h1>
+Academic Paper Search Engine
+</h1>
+
+
+<form action="/search">
+
+<input 
+type="text"
+name="keyword"
+placeholder="Enter research keyword"
+size="50">
+
+
+<button>
+Search
+</button>
+
+
+</form>
+
+
+
+<hr>
+
+
+
+{% for paper in papers %}
+
+
+<h2>
+{{ paper.title }}
+</h2>
+
+
+<p>
+Year:
+{{ paper.year }}
+</p>
+
+
+<p>
+Citation:
+{{ paper.citationCount }}
+</p>
+
+
+<p>
+Authors:
+
+{% for author in paper.authors %}
+
+{{ author.name }},
+
+{% endfor %}
+
+</p>
+
+
+<hr>
+
+
+{% endfor %}
+
+
+
+</body>
+
+
+</html>
