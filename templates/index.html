@@ -1,12 +1,145 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
 
 <head>
 
-<title>
-Semantic Scholar Search
-</title>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Semantic Research Engine</title>
+
+    <style>
+
+        body {
+
+            font-family:
+                Arial,
+                sans-serif;
+
+            background: #f5f7fb;
+
+            margin: 0;
+
+            padding: 40px;
+        }
+
+
+        .container {
+
+            max-width: 1100px;
+
+            margin: auto;
+        }
+
+
+        h1 {
+
+            margin-bottom: 30px;
+        }
+
+
+        form {
+
+            display: flex;
+
+            gap: 10px;
+
+            margin-bottom: 30px;
+        }
+
+
+        input {
+
+            flex: 1;
+
+            padding: 14px;
+
+            border:
+                1px solid #ddd;
+
+            border-radius: 8px;
+
+            font-size: 16px;
+        }
+
+
+        button {
+
+            padding:
+                14px 25px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #2563eb;
+
+            color: white;
+
+            cursor: pointer;
+        }
+
+
+        .dashboard {
+
+            display: inline-block;
+
+            margin-bottom: 30px;
+
+            text-decoration: none;
+
+            color: #2563eb;
+        }
+
+
+        .paper {
+
+            background: white;
+
+            padding: 20px;
+
+            margin-bottom: 15px;
+
+            border-radius: 10px;
+
+            box-shadow:
+                0 2px 8px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.06
+                );
+        }
+
+
+        .paper h3 {
+
+            margin-top: 0;
+        }
+
+
+        .meta {
+
+            color: #666;
+
+            font-size: 14px;
+        }
+
+
+        .score {
+
+            font-weight: bold;
+
+            margin-top: 10px;
+        }
+
+    </style>
 
 </head>
 
@@ -14,73 +147,109 @@ Semantic Scholar Search
 <body>
 
 
-<h1>
-Academic Paper Search Engine
-</h1>
+<div class="container">
 
 
-<form action="/search">
-
-<input 
-type="text"
-name="keyword"
-placeholder="Enter research keyword"
-size="50">
+    <h1>
+        Semantic Research Engine
+    </h1>
 
 
-<button>
-Search
-</button>
+    <a
+        href="/dashboard"
+        class="dashboard"
+    >
+        Open Research Dashboard →
+    </a>
 
 
-</form>
+    <form
+        action="/search"
+        method="get"
+    >
+
+        <input
+            type="text"
+            name="keyword"
+            placeholder="Search scientific papers..."
+            value="{{ keyword or '' }}"
+            required
+        >
+
+        <button type="submit">
+            Search
+        </button>
+
+    </form>
 
 
-
-<hr>
-
+    {% if papers %}
 
 
-{% for paper in papers %}
+        <h2>
+            Search Results
+        </h2>
 
 
-<h2>
-{{ paper.title }}
-</h2>
+        {% for paper in papers %}
 
 
-<p>
-Year:
-{{ paper.year }}
-</p>
+            <div class="paper">
 
 
-<p>
-Citation:
-{{ paper.citationCount }}
-</p>
+                <h3>
+                    {{ paper.title }}
+                </h3>
 
 
-<p>
-Authors:
+                <div class="meta">
 
-{% for author in paper.authors %}
+                    Year:
+                    {{ paper.year or "-" }}
 
-{{ author.name }},
+                    |
 
-{% endfor %}
+                    Citations:
+                    {{ paper.citation_count or 0 }}
 
-</p>
-
-
-<hr>
+                </div>
 
 
-{% endfor %}
+                <div class="score">
 
+                    Research Score:
+                    {{ paper.research_score or 0 }}
+
+                </div>
+
+
+                {% if paper.authors %}
+
+                    <p>
+
+                        <strong>
+                            Authors:
+                        </strong>
+
+                        {{ paper.authors | join(", ") }}
+
+                    </p>
+
+                {% endif %}
+
+
+            </div>
+
+
+        {% endfor %}
+
+
+    {% endif %}
+
+
+</div>
 
 
 </body>
-
 
 </html>

@@ -1,144 +1,672 @@
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
 
 <head>
 
-<title>
-Research Dashboard
-</title>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Research Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+
+        body {
+
+            font-family:
+                Arial,
+                sans-serif;
+
+            margin: 0;
+
+            background: #f5f7fb;
+
+            color: #222;
+        }
 
 
-<style>
+        .container {
 
-body{
-    font-family: Arial;
-    margin:40px;
-}
+            width: 90%;
 
+            max-width: 1300px;
 
-.card{
-
-    border:1px solid #ddd;
-    padding:20px;
-    margin-bottom:20px;
-
-}
+            margin: 40px auto;
+        }
 
 
-table{
+        h1 {
 
-width:100%;
-border-collapse:collapse;
-
-}
+            margin-bottom: 30px;
+        }
 
 
-td,th{
+        .cards {
 
-border:1px solid #ddd;
-padding:10px;
+            display: grid;
 
-}
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(
+                        200px,
+                        1fr
+                    )
+                );
+
+            gap: 20px;
+
+            margin-bottom: 30px;
+        }
 
 
-</style>
+        .card {
 
+            background: white;
+
+            padding: 25px;
+
+            border-radius: 12px;
+
+            box-shadow:
+                0 2px 10px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.08
+                );
+        }
+
+
+        .card h3 {
+
+            margin-top: 0;
+
+            color: #666;
+        }
+
+
+        .number {
+
+            font-size: 32px;
+
+            font-weight: bold;
+        }
+
+
+        .section {
+
+            background: white;
+
+            padding: 25px;
+
+            margin-bottom: 30px;
+
+            border-radius: 12px;
+
+            box-shadow:
+                0 2px 10px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.08
+                );
+        }
+
+
+        .chart-container {
+
+            position: relative;
+
+            height: 400px;
+        }
+
+
+        .year-block {
+
+            border-top:
+                1px solid #eee;
+
+            padding:
+                20px 0;
+        }
+
+
+        .year-title {
+
+            font-size: 24px;
+
+            font-weight: bold;
+
+            margin-bottom: 10px;
+        }
+
+
+        .topic {
+
+            display: inline-block;
+
+            background: #eef2ff;
+
+            padding:
+                8px 12px;
+
+            margin:
+                5px;
+
+            border-radius: 20px;
+
+            font-size: 14px;
+        }
+
+
+        table {
+
+            width: 100%;
+
+            border-collapse:
+                collapse;
+        }
+
+
+        th,
+        td {
+
+            padding: 12px;
+
+            border-bottom:
+                1px solid #eee;
+
+            text-align: left;
+        }
+
+
+        th {
+
+            background: #f8f9fc;
+        }
+
+
+        .score {
+
+            font-weight: bold;
+        }
+
+
+        .back {
+
+            display: inline-block;
+
+            margin-bottom: 20px;
+
+            text-decoration: none;
+
+            color: #2563eb;
+        }
+
+    </style>
 
 </head>
-
 
 
 <body>
 
 
-<h1>
-Research Dashboard
-</h1>
+<div class="container">
 
 
-<div class="card">
+    <a
+        href="/"
+        class="back"
+    >
+        ← Back to Search
+    </a>
 
-<h2>
-Total Papers:
-{{ total }}
-</h2>
+
+    <h1>
+        Research Dashboard
+    </h1>
+
+
+    <!-- SUMMARY -->
+
+
+    <div class="cards">
+
+
+        <div class="card">
+
+            <h3>
+                Total Papers
+            </h3>
+
+            <div class="number">
+                {{ total }}
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>
+                Years Covered
+            </h3>
+
+            <div class="number">
+
+                {{ yearly_count|length }}
+
+            </div>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>
+                Top Topic
+            </h3>
+
+            <div class="number">
+
+                {% if top_global_topics %}
+
+                    {{ top_global_topics[0].name }}
+
+                {% else %}
+
+                    -
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- YEARLY CHART -->
+
+
+    <div class="section">
+
+        <h2>
+            Papers by Year
+        </h2>
+
+
+        <div class="chart-container">
+
+            <canvas id="yearChart"></canvas>
+
+        </div>
+
+    </div>
+
+
+    <!-- YEARLY TOPICS -->
+
+
+    <div class="section">
+
+        <h2>
+            Research Trends by Year
+        </h2>
+
+
+        {% if topics_by_year %}
+
+
+            {% for year_data in topics_by_year %}
+
+                <div class="year-block">
+
+
+                    <div class="year-title">
+
+                        {{ year_data.year }}
+
+                    </div>
+
+
+                    {% if year_data.topics %}
+
+
+                        {% for topic in year_data.topics %}
+
+                            <span class="topic">
+
+                                {{ topic.name }}
+
+                                ({{ topic.count }})
+
+                            </span>
+
+                        {% endfor %}
+
+
+                    {% else %}
+
+                        <p>
+                            No concepts available.
+                        </p>
+
+                    {% endif %}
+
+
+                </div>
+
+            {% endfor %}
+
+
+        {% else %}
+
+            <p>
+                No yearly data available yet.
+            </p>
+
+        {% endif %}
+
+
+    </div>
+
+
+    <!-- GLOBAL TOPICS -->
+
+
+    <div class="section">
+
+        <h2>
+            Overall Research Topics
+        </h2>
+
+
+        {% if top_global_topics %}
+
+
+            {% for topic in top_global_topics %}
+
+                <span class="topic">
+
+                    {{ topic.name }}
+
+                    ({{ topic.count }})
+
+                </span>
+
+            {% endfor %}
+
+
+        {% else %}
+
+            <p>
+                No concept data available.
+            </p>
+
+        {% endif %}
+
+
+    </div>
+
+
+    <!-- SCORE SECTION -->
+
+
+    <div class="section">
+
+        <h2>
+            Top Papers by Research Score
+        </h2>
+
+
+        {% if top_scored_papers %}
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Title
+                        </th>
+
+                        <th>
+                            Year
+                        </th>
+
+                        <th>
+                            Citations
+                        </th>
+
+                        <th>
+                            Score
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+
+                {% for paper in top_scored_papers %}
+
+                    <tr>
+
+                        <td>
+                            {{ paper.title }}
+                        </td>
+
+                        <td>
+                            {{ paper.year or "-" }}
+                        </td>
+
+                        <td>
+                            {{ paper.citation_count or 0 }}
+                        </td>
+
+                        <td class="score">
+                            {{ paper.research_score or 0 }}
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+
+                </tbody>
+
+            </table>
+
+        {% else %}
+
+            <p>
+                No scored papers yet.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- CITATIONS -->
+
+
+    <div class="section">
+
+        <h2>
+            Most Cited Papers
+        </h2>
+
+
+        {% if top_cited_papers %}
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Title
+                        </th>
+
+                        <th>
+                            Year
+                        </th>
+
+                        <th>
+                            Citations
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+
+                {% for paper in top_cited_papers %}
+
+                    <tr>
+
+                        <td>
+                            {{ paper.title }}
+                        </td>
+
+                        <td>
+                            {{ paper.year or "-" }}
+                        </td>
+
+                        <td>
+                            {{ paper.citation_count or 0 }}
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+
+                </tbody>
+
+            </table>
+
+        {% else %}
+
+            <p>
+                No papers yet.
+            </p>
+
+        {% endif %}
+
+
+    </div>
+
 
 </div>
 
 
+<script>
 
-<table>
-
-
-<tr>
-
-<th>
-Title
-</th>
-
-<th>
-Year
-</th>
-
-<th>
-Citation
-</th>
-
-<th>
-Keyword
-</th>
+    const yearlyData =
+        {{ yearly_count | tojson }};
 
 
-</tr>
+    const labels =
+        yearlyData.map(
+            item => item.year
+        );
 
 
-
-{% for paper in papers %}
-
-
-<tr>
-
-
-<td>
-
-{{paper.title}}
-
-</td>
+    const counts =
+        yearlyData.map(
+            item => item.count
+        );
 
 
-<td>
-
-{{paper.year}}
-
-</td>
-
-
-<td>
-
-{{paper.citation_count}}
-
-</td>
+    const ctx =
+        document
+            .getElementById(
+                "yearChart"
+            )
+            .getContext(
+                "2d"
+            );
 
 
-<td>
+    new Chart(
+        ctx,
+        {
 
-{{paper.keyword}}
+            type: "line",
 
-</td>
+            data: {
 
+                labels: labels,
 
-</tr>
+                datasets: [
 
+                    {
 
-{% endfor %}
+                        label:
+                            "Number of Papers",
 
+                        data: counts,
 
-</table>
+                        tension: 0.3,
 
+                        fill: false
+
+                    }
+
+                ]
+
+            },
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                scales: {
+
+                    y: {
+
+                        beginAtZero: true,
+
+                        ticks: {
+
+                            precision: 0
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+    );
+
+</script>
 
 
 </body>
-
 
 </html>

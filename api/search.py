@@ -8,9 +8,26 @@ SEARCH_URL = (
 )
 
 
-def search_paper_ids(keyword, limit=10):
+HEADERS = {
+    "User-Agent": "SemanticResearchEngine/1.0 Academic Research"
+}
 
-    time.sleep(2)
+
+last_request_time = 0
+
+
+
+def search_paper_ids(keyword, limit=5):
+
+    global last_request_time
+
+
+    wait = 10 - (time.time() - last_request_time)
+
+    if wait > 0:
+        time.sleep(wait)
+
+
 
     params = {
 
@@ -18,35 +35,71 @@ def search_paper_ids(keyword, limit=10):
 
         "limit": limit,
 
-        "fields": "paperId"
+        "fields": "paperId,title,year,citationCount"
 
     }
 
 
-    response = requests.get(
-        SEARCH_URL,
-        params=params
-    )
 
+    for attempt in range(3):
 
-    print(
-        "SEARCH STATUS:",
-        response.status_code
-    )
+        response = requests.get(
 
+            SEARCH_URL,
 
-    if response.status_code != 200:
-        print(response.text)
-        return []
+            params=params,
 
+            headers=HEADERS,
 
-    data = response.json()
+            timeout=30
 
-
-    return [
-        paper["paperId"]
-        for paper in data.get(
-            "data",
-            []
         )
-    ]
+
+
+        last_request_time = time.time()
+
+
+
+        print(
+            "SEARCH STATUS:",
+            response.status_code
+        )
+
+
+
+        if response.status_code == 200:
+
+            data = response.json()
+
+
+            return [
+                paper["paperId"]
+                for paper in data.get(
+                    "data",
+                    []
+                )
+            ]
+
+
+
+        if response.status_code == 429:
+
+            wait_time = 30 * (attempt + 1)
+
+            print(
+                f"Rate limit. Waiting {wait_time}s"
+            )
+
+            time.sleep(wait_time)
+
+
+
+        else:
+
+            print(response.text)
+
+            return []
+
+
+
+    return []
