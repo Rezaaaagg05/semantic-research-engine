@@ -28,6 +28,7 @@ templates = Jinja2Templates(
 def home(request: Request):
 
     return templates.TemplateResponse(
+        request=request,
         name="index.html",
         context={
             "request": request,
@@ -176,6 +177,7 @@ def search(
         db.close()
 
     return templates.TemplateResponse(
+        request=request,
         name="index.html",
         context={
             "request": request,
@@ -381,26 +383,16 @@ def dashboard(
     # ----------------------------------------------
 
     return templates.TemplateResponse(
-
+        request=request,
         name="dashboard.html",
-
         context={
-
             "request": request,
-
             "papers": papers,
-
             "total": total,
-
             "yearly_count": yearly_count,
-
             "topics_by_year": topics_by_year,
-
             "top_global_topics": top_global_topics,
-
             "top_scored_papers": top_scored_papers,
-
             "top_cited_papers": top_cited_papers
-
         }
     )
