@@ -43,7 +43,17 @@
 
         h1 {
 
+            margin-bottom: 8px;
+        }
+
+
+        .lead {
+
+            color: #666;
+
             margin-bottom: 30px;
+
+            line-height: 1.5;
         }
 
 
@@ -55,7 +65,7 @@
                 repeat(
                     auto-fit,
                     minmax(
-                        200px,
+                        190px,
                         1fr
                     )
                 );
@@ -70,7 +80,7 @@
 
             background: white;
 
-            padding: 25px;
+            padding: 22px;
 
             border-radius: 12px;
 
@@ -87,18 +97,88 @@
 
         .card h3 {
 
-            margin-top: 0;
+            margin:
+                0 0 10px 0;
 
             color: #666;
+
+            font-size: 14px;
+
+            font-weight: normal;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.5px;
         }
 
 
         .number {
 
-            font-size: 32px;
+            font-size: 30px;
 
             font-weight: bold;
         }
+
+
+        .number.small {
+
+            font-size: 20px;
+        }
+
+
+        .card .hint {
+
+            color: #888;
+
+            font-size: 13px;
+
+            margin-top: 6px;
+        }
+
+
+        /* Each of the four analytical sections gets its own visible band, so
+           they are never read as one continuous metric. */
+
+        .band {
+
+            margin-bottom: 45px;
+        }
+
+
+        .band-head {
+
+            border-left:
+                5px solid #2563eb;
+
+            padding-left: 15px;
+
+            margin-bottom: 20px;
+        }
+
+
+        .band-head h2 {
+
+            margin:
+                0 0 5px 0;
+        }
+
+
+        .band-head p {
+
+            margin: 0;
+
+            color: #666;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+        }
+
+
+        .band-activity .band-head { border-left-color: #2563eb; }
+        .band-trends   .band-head { border-left-color: #7c3aed; }
+        .band-score    .band-head { border-left-color: #059669; }
+        .band-cites    .band-head { border-left-color: #d97706; }
 
 
         .section {
@@ -107,7 +187,7 @@
 
             padding: 25px;
 
-            margin-bottom: 30px;
+            margin-bottom: 20px;
 
             border-radius: 12px;
 
@@ -122,32 +202,113 @@
         }
 
 
+        .section h3 {
+
+            margin-top: 0;
+        }
+
+
         .chart-container {
 
             position: relative;
 
-            height: 400px;
+            height: 360px;
         }
 
 
-        .year-block {
+        .trend-grid {
 
-            border-top:
-                1px solid #eee;
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(
+                        280px,
+                        1fr
+                    )
+                );
+
+            gap: 20px;
+        }
+
+
+        .trend-card {
+
+            background: white;
+
+            padding: 20px;
+
+            border-radius: 12px;
+
+            box-shadow:
+                0 2px 10px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.08
+                );
+        }
+
+
+        .trend-card h3 {
+
+            margin:
+                0 0 4px 0;
+        }
+
+
+        .trend-card .blurb {
+
+            color: #777;
+
+            font-size: 13px;
+
+            margin:
+                0 0 15px 0;
+
+            line-height: 1.4;
+        }
+
+
+        .trend-row {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            gap: 10px;
 
             padding:
-                20px 0;
+                9px 0;
+
+            border-top:
+                1px solid #f1f1f1;
+
+            font-size: 14px;
         }
 
 
-        .year-title {
-
-            font-size: 24px;
+        .trend-row .name {
 
             font-weight: bold;
-
-            margin-bottom: 10px;
         }
+
+
+        .trend-row .figures {
+
+            color: #666;
+
+            white-space: nowrap;
+
+            font-variant-numeric: tabular-nums;
+        }
+
+
+        .up    { color: #059669; font-weight: bold; }
+        .down  { color: #dc2626; font-weight: bold; }
+        .flat  { color: #6b7280; font-weight: bold; }
 
 
         .topic {
@@ -156,15 +317,17 @@
 
             background: #eef2ff;
 
+            color: #3730a3;
+
             padding:
-                8px 12px;
+                7px 12px;
 
             margin:
-                5px;
+                4px 4px 4px 0;
 
             border-radius: 20px;
 
-            font-size: 14px;
+            font-size: 13px;
         }
 
 
@@ -180,24 +343,57 @@
         th,
         td {
 
-            padding: 12px;
+            padding: 11px;
 
             border-bottom:
                 1px solid #eee;
 
             text-align: left;
+
+            font-size: 14px;
         }
 
 
         th {
 
             background: #f8f9fc;
+
+            font-size: 13px;
+        }
+
+
+        td.num,
+        th.num {
+
+            text-align: right;
+
+            font-variant-numeric: tabular-nums;
         }
 
 
         .score {
 
             font-weight: bold;
+
+            color: #059669;
+        }
+
+
+        .cites {
+
+            font-weight: bold;
+
+            color: #d97706;
+        }
+
+
+        .breakdown {
+
+            color: #888;
+
+            font-size: 12px;
+
+            white-space: nowrap;
         }
 
 
@@ -210,6 +406,54 @@
             text-decoration: none;
 
             color: #2563eb;
+        }
+
+
+        .empty {
+
+            color: #777;
+
+            font-style: italic;
+
+            margin: 0;
+        }
+
+
+        .note {
+
+            background: #fffbeb;
+
+            border-left:
+                4px solid #d97706;
+
+            padding:
+                14px 18px;
+
+            border-radius: 8px;
+
+            color: #78350f;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+        }
+
+
+        .thresholds {
+
+            color: #888;
+
+            font-size: 12px;
+
+            margin-top: 15px;
+
+            line-height: 1.6;
+        }
+
+
+        .table-wrap {
+
+            overflow-x: auto;
         }
 
     </style>
@@ -227,7 +471,7 @@
         href="/"
         class="back"
     >
-        ← Back to Search
+        &larr; Back to Search
     </a>
 
 
@@ -236,435 +480,907 @@
     </h1>
 
 
-    <!-- SUMMARY -->
+    <p class="lead">
+
+        {% if keyword %}
+
+            Showing only papers stored for &ldquo;{{ keyword }}&rdquo;.
+
+        {% else %}
+
+            Four independent views over every paper collected so far.
+            Activity, trends, our score, and real-world citations are measured
+            separately &mdash; they answer different questions and often
+            disagree.
+
+        {% endif %}
+
+    </p>
 
 
-    <div class="cards">
+    {% if dashboard.empty %}
+
+        <div class="section">
+
+            <p class="empty">
+
+                No papers stored yet. Run a search first and the dashboard will
+                fill in.
+
+            </p>
+
+        </div>
+
+    {% else %}
 
 
-        <div class="card">
+    {% set activity = dashboard.activity %}
+    {% set trends = dashboard.trends %}
+    {% set scores = dashboard.scores %}
+    {% set citations = dashboard.citations %}
 
-            <h3>
-                Total Papers
-            </h3>
 
-            <div class="number">
-                {{ total }}
-            </div>
+    <!-- ============================================================
+         SECTION A - RESEARCH ACTIVITY
+         How much is published, and when. No topics, no quality.
+         ============================================================ -->
+
+    <div class="band band-activity">
+
+
+        <div class="band-head">
+
+            <h2>A. Research Activity</h2>
+
+            <p>
+                Publication volume over time. Counts papers only &mdash; it says
+                nothing about which topics they cover or how good they are.
+            </p>
 
         </div>
 
 
-        <div class="card">
-
-            <h3>
-                Years Covered
-            </h3>
-
-            <div class="number">
-
-                {{ yearly_count|length }}
-
-            </div>
-
-        </div>
+        <div class="cards">
 
 
-        <div class="card">
+            <div class="card">
 
-            <h3>
-                Top Topic
-            </h3>
+                <h3>Total Papers</h3>
 
-            <div class="number">
+                <div class="number">
+                    {{ activity.total_papers }}
+                </div>
 
-                {% if top_global_topics %}
+                {% if activity.undated_papers %}
 
-                    {{ top_global_topics[0].name }}
+                    <div class="hint">
 
-                {% else %}
+                        {{ activity.undated_papers }} without a publication year
 
-                    -
+                    </div>
 
                 {% endif %}
 
             </div>
 
+
+            <div class="card">
+
+                <h3>Years Covered</h3>
+
+                <div class="number">
+                    {{ activity.years_covered }}
+                </div>
+
+                {% if activity.first_year %}
+
+                    <div class="hint">
+
+                        {{ activity.first_year }}&ndash;{{ activity.last_year }}
+
+                        {% if activity.has_gaps %}
+
+                            (with gaps)
+
+                        {% endif %}
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>Busiest Year</h3>
+
+                <div class="number">
+
+                    {% if activity.peak_year %}
+
+                        {{ activity.peak_year.year }}
+
+                    {% else %}
+
+                        &ndash;
+
+                    {% endif %}
+
+                </div>
+
+                {% if activity.peak_year %}
+
+                    <div class="hint">
+
+                        {{ activity.peak_year.papers }} papers
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+
+            <div class="card">
+
+                <h3>Total Citations</h3>
+
+                <div class="number">
+                    {{ activity.total_citations }}
+                </div>
+
+                <div class="hint">
+
+                    {{ activity.mean_citations }} per paper on average
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+        <div class="section">
+
+            <h3>Papers and citations per year</h3>
+
+            <div class="chart-container">
+
+                <canvas id="activityChart"></canvas>
+
+            </div>
+
         </div>
 
 
     </div>
 
 
-    <!-- YEARLY CHART -->
+    <!-- ============================================================
+         SECTION B - RESEARCH TRENDS
+         Normalized topic shares over time. Separate from activity.
+         ============================================================ -->
+
+    <div class="band band-trends">
 
 
-    <div class="section">
+        <div class="band-head">
 
-        <h2>
-            Papers by Year
-        </h2>
+            <h2>B. Research Trends</h2>
 
-
-        <div class="chart-container">
-
-            <canvas id="yearChart"></canvas>
+            <p>
+                Which topics are rising and falling, measured as a
+                <strong>share of each year's output</strong> rather than raw
+                counts &mdash; so a topic that grows more slowly than the field
+                is correctly reported as declining.
+            </p>
 
         </div>
 
-    </div>
+
+        {% if not trends.sufficient_data %}
+
+            <div class="section">
+
+                <p class="note">
+
+                    <strong>Not enough data to classify trends.</strong>
+
+                    <br>
+
+                    {{ trends.note }}
+
+                </p>
+
+                {% if trends.top_topics %}
+
+                    <h3>Most common topics so far</h3>
+
+                    {% for topic in trends.top_topics %}
+
+                        <span class="topic">
+
+                            {{ topic.name }} ({{ topic.count }})
+
+                        </span>
+
+                    {% endfor %}
+
+                {% endif %}
+
+            </div>
+
+        {% else %}
 
 
-    <!-- YEARLY TOPICS -->
+            <div class="trend-grid">
 
 
-    <div class="section">
-
-        <h2>
-            Research Trends by Year
-        </h2>
+                {% for category in trends.categories %}
 
 
-        {% if topics_by_year %}
+                    <div class="trend-card">
 
 
-            {% for year_data in topics_by_year %}
+                        <h3>{{ category.label }}</h3>
 
-                <div class="year-block">
+                        <p class="blurb">{{ category.blurb }}</p>
 
 
-                    <div class="year-title">
+                        {% if category.rows %}
 
-                        {{ year_data.year }}
+
+                            {% for row in category.rows %}
+
+                                <div class="trend-row">
+
+                                    <span class="name">{{ row.name }}</span>
+
+                                    <span class="figures">
+
+                                        {% if row.change is none %}
+
+                                            <span class="up">new</span>
+
+                                            {{ row.recent_papers }} papers
+
+                                        {% else %}
+
+                                            {% if row.change > 0 %}
+
+                                                <span class="up">
+                                                    +{{ (row.change * 100) | round | int }}%
+                                                </span>
+
+                                            {% elif row.change < 0 %}
+
+                                                <span class="down">
+                                                    {{ (row.change * 100) | round | int }}%
+                                                </span>
+
+                                            {% else %}
+
+                                                <span class="flat">flat</span>
+
+                                            {% endif %}
+
+                                            {{ (row.previous_share * 100) | round(1) }}%
+                                            &rarr;
+                                            {{ (row.recent_share * 100) | round(1) }}%
+
+                                        {% endif %}
+
+                                    </span>
+
+                                </div>
+
+                            {% endfor %}
+
+
+                        {% else %}
+
+                            <p class="empty">Nothing in this category.</p>
+
+                        {% endif %}
+
 
                     </div>
 
 
-                    {% if year_data.topics %}
+                {% endfor %}
 
 
-                        {% for topic in year_data.topics %}
-
-                            <span class="topic">
-
-                                {{ topic.name }}
-
-                                ({{ topic.count }})
-
-                            </span>
-
-                        {% endfor %}
+            </div>
 
 
-                    {% else %}
+            <div class="section">
 
-                        <p>
-                            No concepts available.
-                        </p>
+                <h3>Dominant topics by year</h3>
 
-                    {% endif %}
+                {% set dated_years = activity.years | selectattr('papers') | list %}
 
+                {% if dated_years %}
+
+                    <div class="table-wrap">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>Year</th>
+
+                                    <th class="num">Papers</th>
+
+                                    <th>Dominant topics (share of that year)</th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                                {% for row in dated_years | reverse %}
+
+                                    <tr>
+
+                                        <td>
+                                            {{ row.year }}
+
+                                            {% if not row.reliable %}
+
+                                                <span class="breakdown">(thin)</span>
+
+                                            {% endif %}
+                                        </td>
+
+                                        <td class="num">{{ row.papers }}</td>
+
+                                        <td>
+
+                                            {% if row.topics %}
+
+                                                {% for topic in row.topics %}
+
+                                                    <span class="topic">
+
+                                                        {{ topic.name }}
+                                                        ({{ (topic.share * 100) | round | int }}%)
+
+                                                    </span>
+
+                                                {% endfor %}
+
+                                            {% else %}
+
+                                                <span class="empty">no topics recorded</span>
+
+                                            {% endif %}
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% else %}
+
+                    <p class="empty">No dated papers yet.</p>
+
+                {% endif %}
+
+
+                <p class="thresholds">
+
+                    Method: comparing
+                    {{ trends.previous_window | join(', ') or '-' }}
+                    against
+                    {{ trends.recent_window | join(', ') or '-' }}.
+                    A year needs
+                    {{ trends.thresholds.min_papers_per_year }}+ papers to count;
+                    a topic needs
+                    {{ trends.thresholds.min_total_occurrences }}+ papers overall
+                    and
+                    {{ trends.thresholds.min_recent_occurrences }}+ recent papers.
+                    Growing/declining means a
+                    {{ (trends.thresholds.growth_threshold * 100) | round | int }}%+
+                    move in share; persistent means present in
+                    {{ (trends.thresholds.persistence_ratio * 100) | round | int }}%+
+                    of measured years.
+
+                </p>
+
+            </div>
+
+
+        {% endif %}
+
+
+    </div>
+
+
+    <!-- ============================================================
+         SECTION C - PAPER SCORE
+         Our formula's ranking. Deliberately separate from citations.
+         ============================================================ -->
+
+    <div class="band band-score">
+
+
+        <div class="band-head">
+
+            <h2>C. Paper Score</h2>
+
+            <p>
+                How <em>this application</em> ranks papers, out of
+                {{ scores.formula.max }}:
+                citations ({{ scores.formula.citation }}) +
+                query relevance ({{ scores.formula.relevance }}) +
+                recency ({{ scores.formula.recency }}) +
+                metadata completeness ({{ scores.formula.completeness }}).
+                This is our opinion, not the field's.
+            </p>
+
+        </div>
+
+
+        <div class="cards">
+
+            <div class="card">
+
+                <h3>Mean Score</h3>
+
+                <div class="number">{{ scores.mean_score }}</div>
+
+                <div class="hint">across {{ scores.count }} papers</div>
+
+            </div>
+
+            <div class="card">
+
+                <h3>Highest</h3>
+
+                <div class="number">{{ scores.max_score }}</div>
+
+            </div>
+
+            <div class="card">
+
+                <h3>Lowest</h3>
+
+                <div class="number">{{ scores.min_score }}</div>
+
+            </div>
+
+        </div>
+
+
+        <div class="section">
+
+            <h3>Top papers by research score</h3>
+
+            {% if scores.papers %}
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Title</th>
+
+                                <th class="num">Year</th>
+
+                                <th class="num">Score</th>
+
+                                <th>Components</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for paper in scores.papers %}
+
+                                <tr>
+
+                                    <td>
+
+                                        {% if paper.url %}
+
+                                            <a
+                                                href="{{ paper.url }}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >{{ paper.title }}</a>
+
+                                        {% else %}
+
+                                            {{ paper.title }}
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td class="num">
+                                        {{ paper.year if paper.year else "-" }}
+                                    </td>
+
+                                    <td class="num score">
+                                        {{ paper.research_score }}
+                                    </td>
+
+                                    <td class="breakdown">
+
+                                        {% if paper.breakdown %}
+
+                                            cite {{ paper.breakdown.citation }}
+                                            &middot;
+                                            rel {{ paper.breakdown.relevance }}
+                                            &middot;
+                                            rec {{ paper.breakdown.recency }}
+                                            &middot;
+                                            meta {{ paper.breakdown.completeness }}
+
+                                        {% endif %}
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
 
                 </div>
 
-            {% endfor %}
+            {% else %}
+
+                <p class="empty">No scored papers yet.</p>
+
+            {% endif %}
 
 
-        {% else %}
+            {% if scores.distribution %}
 
-            <p>
-                No yearly data available yet.
-            </p>
+                <h3>Score distribution</h3>
 
-        {% endif %}
+                <div class="chart-container" style="height: 240px;">
 
+                    <canvas id="scoreChart"></canvas>
 
-    </div>
+                </div>
 
+            {% endif %}
 
-    <!-- GLOBAL TOPICS -->
-
-
-    <div class="section">
-
-        <h2>
-            Overall Research Topics
-        </h2>
-
-
-        {% if top_global_topics %}
-
-
-            {% for topic in top_global_topics %}
-
-                <span class="topic">
-
-                    {{ topic.name }}
-
-                    ({{ topic.count }})
-
-                </span>
-
-            {% endfor %}
-
-
-        {% else %}
-
-            <p>
-                No concept data available.
-            </p>
-
-        {% endif %}
+        </div>
 
 
     </div>
 
 
-    <!-- SCORE SECTION -->
+    <!-- ============================================================
+         SECTION D - CITATIONS
+         The field's own verdict. Independent of our score.
+         ============================================================ -->
+
+    <div class="band band-cites">
 
 
-    <div class="section">
+        <div class="band-head">
 
-        <h2>
-            Top Papers by Research Score
-        </h2>
-
-
-        {% if top_scored_papers %}
-
-            <table>
-
-                <thead>
-
-                    <tr>
-
-                        <th>
-                            Title
-                        </th>
-
-                        <th>
-                            Year
-                        </th>
-
-                        <th>
-                            Citations
-                        </th>
-
-                        <th>
-                            Score
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody>
-
-
-                {% for paper in top_scored_papers %}
-
-                    <tr>
-
-                        <td>
-                            {{ paper.title }}
-                        </td>
-
-                        <td>
-                            {{ paper.year or "-" }}
-                        </td>
-
-                        <td>
-                            {{ paper.citation_count or 0 }}
-                        </td>
-
-                        <td class="score">
-                            {{ paper.research_score or 0 }}
-                        </td>
-
-                    </tr>
-
-                {% endfor %}
-
-
-                </tbody>
-
-            </table>
-
-        {% else %}
+            <h2>D. Citations</h2>
 
             <p>
-                No scored papers yet.
+                How much the field itself has cited these papers &mdash; ranked
+                by citation count alone, with no input from our formula. Where
+                this disagrees with section C, the disagreement is the
+                interesting part.
             </p>
 
-        {% endif %}
+        </div>
+
+
+        <div class="cards">
+
+            <div class="card">
+
+                <h3>Most Cited</h3>
+
+                <div class="number">{{ citations.max_citations }}</div>
+
+            </div>
+
+            <div class="card">
+
+                <h3>Median</h3>
+
+                <div class="number">{{ citations.median_citations }}</div>
+
+                <div class="hint">
+                    mean is {{ citations.mean_citations }}
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <h3>h-index</h3>
+
+                <div class="number">{{ citations.h_index }}</div>
+
+                <div class="hint">
+                    over the stored corpus
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <h3>Uncited</h3>
+
+                <div class="number">{{ citations.uncited }}</div>
+
+                <div class="hint">
+                    {{ (citations.uncited_share * 100) | round(1) }}% of the corpus
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="section">
+
+            <h3>Most cited papers</h3>
+
+            {% if citations.papers %}
+
+                <div class="table-wrap">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>Title</th>
+
+                                <th class="num">Year</th>
+
+                                <th class="num">Citations</th>
+
+                                <th class="num">Our score</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for paper in citations.papers %}
+
+                                <tr>
+
+                                    <td>
+
+                                        {% if paper.url %}
+
+                                            <a
+                                                href="{{ paper.url }}"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >{{ paper.title }}</a>
+
+                                        {% else %}
+
+                                            {{ paper.title }}
+
+                                        {% endif %}
+
+                                    </td>
+
+                                    <td class="num">
+                                        {{ paper.year if paper.year else "-" }}
+                                    </td>
+
+                                    <td class="num cites">
+                                        {{ paper.citation_count }}
+                                    </td>
+
+                                    <td class="num">
+                                        {{ paper.research_score }}
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <p class="empty">No papers yet.</p>
+
+            {% endif %}
+
+        </div>
+
 
     </div>
 
 
-    <!-- CITATIONS -->
-
-
-    <div class="section">
-
-        <h2>
-            Most Cited Papers
-        </h2>
-
-
-        {% if top_cited_papers %}
-
-            <table>
-
-                <thead>
-
-                    <tr>
-
-                        <th>
-                            Title
-                        </th>
-
-                        <th>
-                            Year
-                        </th>
-
-                        <th>
-                            Citations
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody>
-
-
-                {% for paper in top_cited_papers %}
-
-                    <tr>
-
-                        <td>
-                            {{ paper.title }}
-                        </td>
-
-                        <td>
-                            {{ paper.year or "-" }}
-                        </td>
-
-                        <td>
-                            {{ paper.citation_count or 0 }}
-                        </td>
-
-                    </tr>
-
-                {% endfor %}
-
-
-                </tbody>
-
-            </table>
-
-        {% else %}
-
-            <p>
-                No papers yet.
-            </p>
-
-        {% endif %}
-
-
-    </div>
+    {% endif %}
 
 
 </div>
 
 
+{% if not dashboard.empty %}
+
 <script>
 
-    const yearlyData =
-        {{ yearly_count | tojson }};
+    const activityData =
+        {{ dashboard.activity.chart | tojson }};
 
 
-    const labels =
-        yearlyData.map(
-            item => item.year
-        );
+    const activityCanvas =
+        document.getElementById("activityChart");
 
 
-    const counts =
-        yearlyData.map(
-            item => item.count
-        );
+    if (activityCanvas && activityData.labels.length) {
 
+        new Chart(
+            activityCanvas.getContext("2d"),
+            {
+                type: "line",
 
-    const ctx =
-        document
-            .getElementById(
-                "yearChart"
-            )
-            .getContext(
-                "2d"
-            );
+                data: {
 
+                    labels: activityData.labels,
 
-    new Chart(
-        ctx,
-        {
-
-            type: "line",
-
-            data: {
-
-                labels: labels,
-
-                datasets: [
-
-                    {
-
-                        label:
-                            "Number of Papers",
-
-                        data: counts,
-
-                        tension: 0.3,
-
-                        fill: false
-
-                    }
-
-                ]
-
-            },
-
-            options: {
-
-                responsive: true,
-
-                maintainAspectRatio: false,
-
-                scales: {
-
-                    y: {
-
-                        beginAtZero: true,
-
-                        ticks: {
-
-                            precision: 0
-
+                    datasets: [
+                        {
+                            label: "Papers",
+                            data: activityData.papers,
+                            borderColor: "#2563eb",
+                            backgroundColor: "rgba(37, 99, 235, 0.1)",
+                            tension: 0.3,
+                            fill: true,
+                            yAxisID: "y"
+                        },
+                        {
+                            label: "Citations",
+                            data: activityData.citations,
+                            borderColor: "#d97706",
+                            tension: 0.3,
+                            fill: false,
+                            yAxisID: "y1"
                         }
+                    ]
+                },
 
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    interaction: {
+                        mode: "index",
+                        intersect: false
+                    },
+
+                    scales: {
+
+                        y: {
+                            beginAtZero: true,
+                            position: "left",
+                            title: {
+                                display: true,
+                                text: "Papers"
+                            },
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+
+                        y1: {
+                            beginAtZero: true,
+                            position: "right",
+                            title: {
+                                display: true,
+                                text: "Citations"
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            },
+                            ticks: {
+                                precision: 0
+                            }
+                        }
                     }
-
                 }
-
             }
+        );
+    }
 
-        }
-    );
+
+    const scoreData =
+        {{ dashboard.scores.distribution | tojson }};
+
+
+    const scoreCanvas =
+        document.getElementById("scoreChart");
+
+
+    if (scoreCanvas && scoreData.length) {
+
+        new Chart(
+            scoreCanvas.getContext("2d"),
+            {
+                type: "bar",
+
+                data: {
+
+                    labels: scoreData.map(item => item.label),
+
+                    datasets: [
+                        {
+                            label: "Papers",
+                            data: scoreData.map(item => item.count),
+                            backgroundColor: "#059669"
+                        }
+                    ]
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+
+                    scales: {
+
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            }
+        );
+    }
 
 </script>
+
+{% endif %}
 
 
 </body>

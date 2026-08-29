@@ -1,398 +1,217 @@
-import json
-from collections import Counter, defaultdict
+"""
+HTTP layer.
 
-from fastapi import FastAPI, Request
+Routes do three things and nothing more: read request parameters, call a
+service, and render a template.  There is no provider logic, no scoring, no
+topic counting and no aggregation in this file -- each of those lives in its
+own module and is unit-tested there.
+"""
+
+from pathlib import Path
+
+from fastapi import FastAPI, Query, Request
+from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 
-from database import (
-    SessionLocal,
-    Paper
+import config
+import dashboard_service
+import database
+import search_service
+from providers import ProviderError, describe_providers
+from providers.errors import SearchPipelineError
+
+
+BASE_DIR = Path(__file__).resolve().parent
+
+
+app = FastAPI(
+    title="Semantic Research Engine",
+    description="Search scholarly literature and analyse research trends.",
+    version="2.0.0",
 )
 
-from provider import collect_papers
+
+# Templates are resolved relative to this file, so the app runs correctly no
+# matter which directory uvicorn was started from.
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
-app = FastAPI()
+def _providers_context():
+    """Provider registry state, shown in the UI so the default is never a mystery."""
+
+    return {
+        "providers": describe_providers(),
+        "default_provider": config.DEFAULT_PROVIDER,
+    }
 
 
-templates = Jinja2Templates(
-    directory="templates"
-)
-
-
-# --------------------------------------------------
+# --------------------------------------------------------------------------
 # HOME
-# --------------------------------------------------
+# --------------------------------------------------------------------------
 
 @app.get("/")
 def home(request: Request):
+    """Empty search page."""
+
+    context = {
+        "papers": [],
+        "keyword": "",
+        "result": None,
+        "error": None,
+        "total_stored": database.count_papers(),
+    }
+
+    context.update(_providers_context())
 
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={
-            "request": request,
-            "papers": []
-        }
+        context=context,
     )
 
 
-# --------------------------------------------------
+# --------------------------------------------------------------------------
 # SEARCH
-# --------------------------------------------------
+# --------------------------------------------------------------------------
 
 @app.get("/search")
 def search(
     request: Request,
-    keyword: str
+    keyword: str = Query(..., min_length=1, description="Search phrase"),
+    provider: str = Query(None, description="Provider name; blank uses the default"),
 ):
+    """Run a search, store the results, and render them.
 
-    papers = collect_papers(
-        keyword
-    )
+    A provider failure is reported on the page rather than raised as a 500:
+    the user gets an explanation and a working form, not a stack trace.  The
+    HTTP status still reflects what happened, so API clients see the truth too.
+    """
 
-    db = SessionLocal()
+    error = None
+    result = None
+    status_code = 200
 
     try:
+        result = search_service.run_search(
+            keyword,
+            provider=provider,
+            persist=True,
+        )
 
-        for paper in papers:
+    except (ProviderError, SearchPipelineError) as failure:
+        status_code, detail = search_service.search_error_response(failure)
 
-            paper_id = paper.get(
-                "paper_id"
-            )
+        error = {
+            "kind": getattr(failure, "kind", "error"),
+            "message": detail,
+            "provider": getattr(failure, "provider", None),
+        }
 
-            if not paper_id:
-                continue
+    context = {
+        "papers": result.papers if result else [],
+        "keyword": keyword,
+        "result": result._asdict() if result else None,
+        "error": error,
+        "total_stored": database.count_papers(),
+    }
 
-            existing = (
-                db.query(Paper)
-                .filter(
-                    Paper.paper_id == paper_id
-                )
-                .first()
-            )
-
-            concepts_json = json.dumps(
-                paper.get(
-                    "concepts",
-                    []
-                ),
-                ensure_ascii=False
-            )
-
-            authors_text = ", ".join(
-                paper.get(
-                    "authors",
-                    []
-                )
-            )
-
-            if existing:
-
-                existing.title = paper.get(
-                    "title"
-                )
-
-                existing.abstract = paper.get(
-                    "abstract"
-                )
-
-                existing.year = paper.get(
-                    "year"
-                )
-
-                existing.citation_count = (
-                    paper.get(
-                        "citation_count",
-                        0
-                    )
-                    or 0
-                )
-
-                existing.authors = (
-                    authors_text
-                )
-
-                existing.keyword = keyword
-
-                existing.research_score = (
-                    paper.get(
-                        "research_score",
-                        0
-                    )
-                )
-
-                existing.concepts = (
-                    concepts_json
-                )
-
-            else:
-
-                new_paper = Paper(
-
-                    paper_id=paper_id,
-
-                    title=paper.get(
-                        "title"
-                    ),
-
-                    abstract=paper.get(
-                        "abstract"
-                    ),
-
-                    year=paper.get(
-                        "year"
-                    ),
-
-                    citation_count=(
-                        paper.get(
-                            "citation_count",
-                            0
-                        )
-                        or 0
-                    ),
-
-                    authors=authors_text,
-
-                    keyword=keyword,
-
-                    research_score=(
-                        paper.get(
-                            "research_score",
-                            0
-                        )
-                    ),
-
-                    concepts=concepts_json
-                )
-
-                db.add(
-                    new_paper
-                )
-
-        db.commit()
-
-    finally:
-
-        db.close()
+    context.update(_providers_context())
 
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={
-            "request": request,
-            "papers": papers,
-            "keyword": keyword
-        }
+        context=context,
+        status_code=status_code,
     )
 
 
-# --------------------------------------------------
+# --------------------------------------------------------------------------
 # DASHBOARD
-# --------------------------------------------------
+# --------------------------------------------------------------------------
 
 @app.get("/dashboard")
 def dashboard(
-    request: Request
+    request: Request,
+    keyword: str = Query(None, description="Restrict the dashboard to one search term"),
 ):
+    """Four independent analytical views over the stored corpus."""
 
-    db = SessionLocal()
+    papers = database.load_papers(keyword=keyword)
 
-    try:
+    context = {
+        "dashboard": dashboard_service.build_dashboard(papers),
+        "keyword": keyword,
+    }
 
-        papers = (
-            db.query(Paper)
-            .order_by(
-                Paper.year.asc()
-            )
-            .all()
-        )
-
-    finally:
-
-        db.close()
-
-
-    # ----------------------------------------------
-    # تعداد کل
-    # ----------------------------------------------
-
-    total = len(
-        papers
-    )
-
-
-    # ----------------------------------------------
-    # تعداد مقالات بر اساس سال
-    # ----------------------------------------------
-
-    yearly_counter = Counter()
-
-    for paper in papers:
-
-        if paper.year:
-
-            yearly_counter[
-                paper.year
-            ] += 1
-
-
-    yearly_count = [
-        {
-            "year": year,
-            "count": yearly_counter[year]
-        }
-
-        for year in sorted(
-            yearly_counter.keys()
-        )
-    ]
-
-
-    # ----------------------------------------------
-    # Concept های هر سال
-    # ----------------------------------------------
-
-    concepts_by_year = defaultdict(
-        Counter
-    )
-
-    for paper in papers:
-
-        if not paper.year:
-            continue
-
-        concepts = []
-
-        if paper.concepts:
-
-            try:
-
-                concepts = json.loads(
-                    paper.concepts
-                )
-
-            except (
-                json.JSONDecodeError,
-                TypeError
-            ):
-
-                concepts = []
-
-        for concept in concepts:
-
-            if concept:
-
-                concepts_by_year[
-                    paper.year
-                ][concept] += 1
-
-
-    # ----------------------------------------------
-    # Topic های غالب هر سال
-    # ----------------------------------------------
-
-    topics_by_year = []
-
-    for year in sorted(
-        concepts_by_year.keys()
-    ):
-
-        counter = concepts_by_year[
-            year
-        ]
-
-        top_topics = [
-            {
-                "name": name,
-                "count": count
-            }
-
-            for name, count in counter.most_common(
-                5
-            )
-        ]
-
-        topics_by_year.append(
-            {
-                "year": year,
-                "topics": top_topics
-            }
-        )
-
-
-    # ----------------------------------------------
-    # Trend کلی
-    # ----------------------------------------------
-
-    global_concepts = Counter()
-
-    for counter in concepts_by_year.values():
-
-        global_concepts.update(
-            counter
-        )
-
-
-    top_global_topics = [
-        {
-            "name": name,
-            "count": count
-        }
-
-        for name, count in global_concepts.most_common(
-            10
-        )
-    ]
-
-
-    # ----------------------------------------------
-    # Score جداگانه
-    # ----------------------------------------------
-
-    score_sorted = sorted(
-        papers,
-        key=lambda paper: (
-            paper.research_score or 0
-        ),
-        reverse=True
-    )
-
-
-    top_scored_papers = score_sorted[:10]
-
-
-    # ----------------------------------------------
-    # Citation جداگانه
-    # ----------------------------------------------
-
-    citation_sorted = sorted(
-        papers,
-        key=lambda paper: (
-            paper.citation_count or 0
-        ),
-        reverse=True
-    )
-
-
-    top_cited_papers = citation_sorted[:10]
-
-
-    # ----------------------------------------------
-    # Template
-    # ----------------------------------------------
+    context.update(_providers_context())
 
     return templates.TemplateResponse(
         request=request,
         name="dashboard.html",
-        context={
-            "request": request,
-            "papers": papers,
-            "total": total,
-            "yearly_count": yearly_count,
-            "topics_by_year": topics_by_year,
-            "top_global_topics": top_global_topics,
-            "top_scored_papers": top_scored_papers,
-            "top_cited_papers": top_cited_papers
-        }
+        context=context,
     )
+
+
+# --------------------------------------------------------------------------
+# JSON endpoints (handy for scripts and for checking the pipeline)
+# --------------------------------------------------------------------------
+
+@app.get("/api/health")
+def health():
+    """Liveness plus the facts worth knowing about this instance."""
+
+    return {
+        "status": "ok",
+        "version": app.version,
+        "default_provider": config.DEFAULT_PROVIDER,
+        "providers": describe_providers(),
+        "stored_papers": database.count_papers(),
+        "database": str(config.DATABASE_PATH),
+    }
+
+
+@app.get("/api/search")
+def api_search(
+    keyword: str = Query(..., min_length=1),
+    provider: str = Query(None),
+    persist: bool = Query(True),
+):
+    """Search as JSON, with honest HTTP status codes on failure."""
+
+    try:
+        result = search_service.run_search(
+            keyword,
+            provider=provider,
+            persist=persist,
+        )
+
+    except (ProviderError, SearchPipelineError) as failure:
+        status_code, detail = search_service.search_error_response(failure)
+
+        return JSONResponse(
+            status_code=status_code,
+            content={
+                "error": detail,
+                "kind": getattr(failure, "kind", "error"),
+                "provider": getattr(failure, "provider", None),
+            },
+        )
+
+    return {
+        "keyword": keyword,
+        "provider": result.provider,
+        "count": len(result.papers),
+        "inserted": result.inserted,
+        "updated": result.updated,
+        "total_stored": result.total,
+        "papers": result.papers,
+    }
+
+
+@app.get("/api/dashboard")
+def api_dashboard(keyword: str = Query(None)):
+    """The dashboard data, unrendered."""
+
+    papers = database.load_papers(keyword=keyword)
+
+    return dashboard_service.build_dashboard(papers)
