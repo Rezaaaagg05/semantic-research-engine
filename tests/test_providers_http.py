@@ -148,6 +148,41 @@ class TestRateLimiting:
         # We tell the caller to come back later rather than blocking the request.
         assert recorded_sleep.durations == []
 
+    def test_opted_in_rate_limit_waits_then_retries(
+        self, fake_session, fake_response, recorded_sleep
+    ):
+        session = fake_session(
+            [
+                fake_response(429, {}, headers={"Retry-After": "4"}),
+                fake_response(200, {"ok": True}),
+            ]
+        )
+
+        assert call(
+            session,
+            sleep=recorded_sleep,
+            retry_rate_limited=True,
+            rate_limit_retries=1,
+        ) == {"ok": True}
+        assert session.call_count == 2
+        assert recorded_sleep.durations == [4.0]
+
+    def test_opted_in_rate_limit_without_header_is_bounded(
+        self, fake_session, fake_response, recorded_sleep
+    ):
+        session = fake_session(fake_response(429, {}))
+
+        with pytest.raises(ProviderRateLimited):
+            call(
+                session,
+                sleep=recorded_sleep,
+                retry_rate_limited=True,
+                rate_limit_retries=1,
+            )
+
+        assert session.call_count == 2
+        assert len(recorded_sleep.durations) == 1
+
 
 class TestRetries:
 

@@ -91,12 +91,42 @@ SEARCH_PAGES = max(1, min(env_int("SEARCH_PAGES", 3), 20))
 #: Results per page (OpenAlex allows up to 200; 100 is a good balance).
 SEARCH_PER_PAGE = max(1, min(env_int("SEARCH_PER_PAGE", 100), 200))
 
+
+# --------------------------------------------------------------------------
+# Relevance analysis
+# --------------------------------------------------------------------------
+
+#: Conservative exclusion boundary.  Scores below this have too little
+#: lexical/topic evidence to enter the stored corpus.  Kept deliberately low
+#: to favour recall: uncertainty keeps a paper rather than discarding it.
+RELEVANCE_MIN_SCORE = max(0, min(env_int("RELEVANCE_MIN_SCORE", 20), 100))
+
+#: Human-readable bands shown with the independent numerical score.
+RELEVANCE_MEDIUM_SCORE = max(
+    RELEVANCE_MIN_SCORE,
+    min(env_int("RELEVANCE_MEDIUM_SCORE", 30), 100),
+)
+RELEVANCE_HIGH_SCORE = max(
+    RELEVANCE_MEDIUM_SCORE,
+    min(env_int("RELEVANCE_HIGH_SCORE", 50), 100),
+)
+
 #: Socket/read timeout for a single provider HTTP request, in seconds.
 REQUEST_TIMEOUT = env_float("REQUEST_TIMEOUT", 30.0)
 
 #: How many times a *retryable* failure is retried.  Bounded and finite --
 #: never recursive, never unlimited.
 MAX_RETRIES = max(0, min(env_int("MAX_RETRIES", 2), 5))
+
+#: OpenAlex 429 responses may be retried once after waiting. This is separate
+#: from normal transient-error retries and intentionally capped.
+RATE_LIMIT_RETRIES = max(0, min(env_int("RATE_LIMIT_RETRIES", 1), 2))
+
+#: Maximum time spent honoring one Retry-After value.
+MAX_RATE_LIMIT_WAIT_SECONDS = max(
+    0.0,
+    min(env_float("MAX_RATE_LIMIT_WAIT_SECONDS", 60.0), 300.0),
+)
 
 #: Base for the exponential backoff between retries, in seconds.
 RETRY_BACKOFF_SECONDS = env_float("RETRY_BACKOFF_SECONDS", 2.0)
@@ -110,6 +140,7 @@ INTER_PAGE_DELAY = env_float("INTER_PAGE_DELAY", 0.3)
 
 #: Contact address for the OpenAlex "polite pool".  Optional but recommended;
 #: OpenAlex gives identified traffic better throughput.
+OPENALEX_API_KEY = env_str("OPENALEX_API_KEY", "")
 OPENALEX_MAILTO = env_str("OPENALEX_MAILTO", "")
 
 USER_AGENT = env_str("USER_AGENT", "SemanticResearchEngine/2.0 (academic research)")

@@ -9,9 +9,8 @@ Design rules, all of them intentional:
   * Bounded retries.  A finite number of attempts with exponential backoff,
     every sleep capped by config.MAX_BACKOFF_SECONDS.  A provider can never
     park a web request for minutes.
-  * 429 is respected, not circumvented.  A rate limit raises
-    ProviderRateLimited immediately, honouring Retry-After only when it fits
-    inside our cap; otherwise the caller is told to come back later.
+  * 429 is respected, not circumvented.  Callers may opt into one bounded
+    Retry-After wait/retry; the default remains immediate error propagation.
   * 4xx is never retried.  A bad request or a missing key does not get better
     by asking again.
 """
@@ -84,6 +83,9 @@ def get_json(
     max_retries=None,
     session=None,
     sleep=None,
+    retry_rate_limited=False,
+    rate_limit_retries=None,
+    max_rate_limit_wait=None,
 ):
     """GET ``url`` and return parsed JSON.
 
@@ -92,7 +94,8 @@ def get_json(
     partially-parsed body.
 
     ``session`` and ``sleep`` are injectable so tests can run without network
-    access and without real delays.
+    access and without real delays. Rate-limit retries are opt-in so providers
+    that preserve immediate 429 propagation can continue to do so.
     """
 
     if timeout is None:
@@ -101,6 +104,12 @@ def get_json(
     if max_retries is None:
         max_retries = config.MAX_RETRIES
 
+    if rate_limit_retries is None:
+        rate_limit_retries = config.RATE_LIMIT_RETRIES
+
+    if max_rate_limit_wait is None:
+        max_rate_limit_wait = config.MAX_RATE_LIMIT_WAIT_SECONDS
+
     if sleep is None:
         sleep = time.sleep
 
@@ -108,10 +117,15 @@ def get_json(
 
     attempts = max_retries + 1
     last_error = None
+    pending_sleep = None
+    rate_limit_attempts = 0
 
     for attempt in range(attempts):
 
-        if attempt:
+        if pending_sleep is not None:
+            sleep(pending_sleep)
+            pending_sleep = None
+        elif attempt:
             sleep(_backoff_delay(attempt - 1))
 
         try:
@@ -132,12 +146,21 @@ def get_json(
         status = getattr(response, "status_code", None)
 
         if status == 429:
-            # Respect the limit.  Do not retry past it, do not try to look
-            # like a different client.
+            retry_after = _retry_after_seconds(response)
+
+            if retry_rate_limited and rate_limit_attempts < max(0, int(rate_limit_retries)):
+                rate_limit_attempts += 1
+                delay = retry_after if retry_after is not None else _backoff_delay(attempt)
+                pending_sleep = min(
+                    max(float(delay), 0.0),
+                    max(0.0, float(max_rate_limit_wait)),
+                )
+                continue
+
             raise ProviderRateLimited(
                 f"{provider} rate limit reached (HTTP 429)",
                 provider=provider,
-                retry_after=_retry_after_seconds(response),
+                retry_after=retry_after,
             )
 
         if status in RETRYABLE_STATUS:

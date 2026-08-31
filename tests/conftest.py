@@ -46,6 +46,10 @@ os.environ["RESEARCH_DATABASE_PATH"] = str(TEST_DB_PATH)
 os.environ.setdefault("RESEARCH_PROVIDER", "openalex")
 os.environ["INTER_PAGE_DELAY"] = "0"
 os.environ["OPENALEX_MAILTO"] = ""
+os.environ["OPENALEX_API_KEY"] = ""
+os.environ["RELEVANCE_MIN_SCORE"] = "20"
+os.environ["RELEVANCE_MEDIUM_SCORE"] = "30"
+os.environ["RELEVANCE_HIGH_SCORE"] = "50"
 
 # Semantic Scholar must be *off* by default in tests, so the adapter's
 # "refuses to call without configuration" behaviour is what gets exercised.
@@ -304,6 +308,9 @@ def canonical_paper(index=1, **overrides):
         "url": f"https://openalex.org/W{index}",
         "source": "openalex",
         "research_score": 0,
+        "relevance_score": 0,
+        "relevance_level": None,
+        "relevance_reasons": [],
         "keyword": "portfolio risk",
     }
 

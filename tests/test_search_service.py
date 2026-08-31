@@ -51,7 +51,12 @@ class FakeProvider:
 def two_papers(make_paper):
     return [
         make_paper(1, title="Portfolio risk measurement", year=2023, citation_count=120),
-        make_paper(2, title="Systemic risk in networks", year=2015, citation_count=8),
+        make_paper(
+            2,
+            title="Systemic portfolio risk in networks",
+            year=2015,
+            citation_count=8,
+        ),
     ]
 
 
@@ -128,7 +133,15 @@ class TestHappyPath:
     def test_a_reference_year_can_be_pinned(self, db_session, make_paper):
         # Same paper, two baselines: the older baseline cannot make a 2023 paper
         # look stale, so pinning the year must change the recency component.
-        paper = make_paper(1, year=2005, citation_count=0, abstract=None, authors=[], concepts=[])
+        paper = make_paper(
+            1,
+            title="Risk",
+            year=2005,
+            citation_count=0,
+            abstract=None,
+            authors=[],
+            concepts=[],
+        )
 
         recent = run_search(
             "risk",
@@ -165,6 +178,53 @@ class TestEmptyResults:
                 run_search(keyword, provider_instance=provider, database_session=db_session)
 
         assert provider.calls == []
+
+
+class TestRelevanceStage:
+
+    def test_irrelevant_candidates_are_excluded_before_scoring_and_storage(
+        self, db_session, make_paper
+    ):
+        relevant = make_paper(
+            1,
+            title="Portfolio risk management",
+            concepts=[],
+        )
+        irrelevant = make_paper(
+            2,
+            title="Clinical outcomes after kidney transplantation",
+            abstract="A medical cohort study.",
+            concepts=[],
+            citation_count=10000,
+        )
+
+        result = run_search(
+            "portfolio risk management",
+            provider_instance=FakeProvider([relevant, irrelevant]),
+            database_session=db_session,
+        )
+
+        assert result.retrieved == 2
+        assert result.excluded == 1
+        assert [paper["paper_id"] for paper in result.papers] == [relevant["paper_id"]]
+        assert result.papers[0]["relevance_score"] == 50
+        assert result.papers[0]["research_score"] > 0
+        assert database.count_papers(session=db_session) == 1
+
+    def test_relevance_outputs_are_persisted(self, db_session, make_paper):
+        result = run_search(
+            "portfolio risk management",
+            provider_instance=FakeProvider(
+                [make_paper(1, title="Portfolio risk management", concepts=[])]
+            ),
+            database_session=db_session,
+        )
+
+        stored = database.load_papers(session=db_session)[0]
+
+        assert stored["relevance_score"] == result.papers[0]["relevance_score"]
+        assert stored["relevance_level"] == "High"
+        assert stored["relevance_reasons"] == result.papers[0]["relevance_reasons"]
 
 
 class TestPersistence:

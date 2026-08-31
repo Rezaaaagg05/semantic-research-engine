@@ -95,6 +95,9 @@ class TestMigrationFromTheFirstRelease:
             "url",
             "created_at",
             "updated_at",
+            "relevance_score",
+            "relevance_level",
+            "relevance_reasons",
         }
 
     def test_the_existing_rows_survive_untouched(self, legacy_database):
@@ -337,6 +340,26 @@ class TestSavePapers:
         assert json.loads(row.concepts)[0]["name"] == "Value at risk"   # JSON array
         assert row.source == "openalex"
         assert row.keyword == "portfolio risk"
+
+    def test_relevance_outputs_round_trip(self, db_session, make_paper):
+        reasons = ["exact normalized query phrase in title", "title matches 3/3 query terms"]
+        save_papers(
+            [
+                make_paper(
+                    1,
+                    relevance_score=50,
+                    relevance_level="High",
+                    relevance_reasons=reasons,
+                )
+            ],
+            session=db_session,
+        )
+
+        loaded = load_papers(session=db_session)[0]
+
+        assert loaded["relevance_score"] == 50
+        assert loaded["relevance_level"] == "High"
+        assert loaded["relevance_reasons"] == reasons
 
     def test_the_keyword_of_the_latest_search_is_recorded(self, db_session, make_paper):
         save_papers([make_paper(1)], keyword="first search", session=db_session)

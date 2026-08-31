@@ -142,6 +142,7 @@ class TestConfiguration:
         hint = provider().configuration_hint()
 
         assert "no API key" in hint
+        assert "OPENALEX_API_KEY" in hint
         assert "OPENALEX_MAILTO" in hint
 
     def test_registry_identity(self):
@@ -160,6 +161,32 @@ class TestConfiguration:
         session = fake_session(fake_response(200, page([])))
         provider(session).fetch_raw("risk")
         assert session.calls[0]["params"]["mailto"] == "me@example.test"
+
+    def test_api_key_is_sent_only_when_configured(
+        self, fake_session, fake_response, monkeypatch
+    ):
+        monkeypatch.setattr(config, "OPENALEX_API_KEY", "test-openalex-key")
+        session = fake_session(fake_response(200, page([])))
+        provider(session).fetch_raw("risk")
+        assert session.calls[0]["params"]["api_key"] == "test-openalex-key"
+
+        monkeypatch.setattr(config, "OPENALEX_API_KEY", "")
+        session = fake_session(fake_response(200, page([])))
+        provider(session).fetch_raw("risk")
+        assert "api_key" not in session.calls[0]["params"]
+
+    def test_api_key_is_not_copied_into_provider_errors(
+        self, fake_session, fake_response, monkeypatch
+    ):
+        secret = "test-openalex-key"
+        monkeypatch.setattr(config, "OPENALEX_API_KEY", secret)
+        session = fake_session(fake_response(401, {}))
+
+        with pytest.raises(ProviderUnavailable) as raised:
+            provider(session).fetch_raw("risk")
+
+        assert secret not in raised.value.message
+        assert secret not in repr(raised.value)
 
     def test_only_the_fields_we_use_are_requested(self, fake_session, fake_response):
         session = fake_session(fake_response(200, page([])))
@@ -307,6 +334,42 @@ class TestFailures:
 
         with pytest.raises(ProviderRateLimited):
             provider(session).search("risk", pages=1)
+
+    def test_rate_limit_retry_waits_then_succeeds(
+        self, fake_session, fake_response, make_openalex_work, recorded_sleep, monkeypatch
+    ):
+        monkeypatch.setattr(config, "OPENALEX_API_KEY", "test-openalex-key")
+        monkeypatch.setattr(config, "RATE_LIMIT_RETRIES", 1)
+        session = fake_session(
+            [
+                fake_response(429, {}, headers={"Retry-After": "3"}),
+                fake_response(200, page([make_openalex_work(1)])),
+            ]
+        )
+
+        papers = OpenAlexProvider(session=session, sleep=recorded_sleep).search(
+            "risk", pages=1, per_page=10
+        )
+
+        assert len(papers) == 1
+        assert session.call_count == 2
+        assert recorded_sleep.durations == [3.0]
+        assert all(call["params"]["api_key"] == "test-openalex-key" for call in session.calls)
+
+    def test_rate_limit_without_retry_after_uses_one_bounded_fallback(
+        self, fake_session, fake_response, recorded_sleep, monkeypatch
+    ):
+        monkeypatch.setattr(config, "RATE_LIMIT_RETRIES", 1)
+        session = fake_session(fake_response(429, {}))
+
+        with pytest.raises(ProviderRateLimited) as raised:
+            OpenAlexProvider(session=session, sleep=recorded_sleep).search(
+                "risk", pages=1, per_page=10
+            )
+
+        assert session.call_count == 2
+        assert recorded_sleep.durations == [config.RETRY_BACKOFF_SECONDS]
+        assert raised.value.retry_after is None
 
     def test_a_payload_without_a_results_list_is_an_error(self, fake_session, fake_response):
         session = fake_session(fake_response(200, {"meta": {"count": 0}}))

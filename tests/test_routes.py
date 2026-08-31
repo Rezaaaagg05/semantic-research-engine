@@ -89,7 +89,12 @@ def install_provider(monkeypatch):
 def two_papers(make_paper):
     return [
         make_paper(1, title="Portfolio risk measurement", year=2023, citation_count=120),
-        make_paper(2, title="Systemic risk in networks", year=2015, citation_count=8),
+        make_paper(
+            2,
+            title="Systemic portfolio risk in networks",
+            year=2015,
+            citation_count=8,
+        ),
     ]
 
 
@@ -122,6 +127,8 @@ class TestSearchPage:
 
         assert response.status_code == 200
         assert "Portfolio risk measurement" in response.text
+        assert "Relevance:" in response.text
+        assert "Why it matched:" in response.text
 
     def test_the_keyword_reaches_the_provider(self, client, install_provider, two_papers):
         provider = install_provider(FakeProvider(two_papers))
@@ -275,11 +282,14 @@ class TestSearchApi:
 
         assert payload["keyword"] == "portfolio risk"
         assert payload["provider"] == "fakeprovider"
+        assert payload["retrieved"] == 2
+        assert payload["excluded"] == 0
         assert payload["count"] == 2
         assert payload["inserted"] == 2
         assert payload["updated"] == 0
         assert payload["total_stored"] == 2
         assert all(paper["research_score"] > 0 for paper in payload["papers"])
+        assert all(paper["relevance_score"] > 0 for paper in payload["papers"])
 
     def test_results_are_ranked(self, client, install_provider, two_papers):
         install_provider(FakeProvider(two_papers))

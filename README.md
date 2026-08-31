@@ -4,6 +4,12 @@ A small FastAPI application that searches scholarly literature, stores what it
 finds, scores it, and reports what the corpus actually says about a field over
 time.
 
+The search path separates three questions: the provider retrieves candidates,
+the relevance layer conservatively removes candidates with insufficient query
+evidence, and the existing Research Score ranks the retained papers. Relevance
+is calculated before persistence, so concepts and trends operate on the
+cleaner corpus.
+
 **OpenAlex is the default and only enabled provider.** Semantic Scholar has a
 finished adapter that stays switched off until it is deliberately configured
 (see [Semantic Scholar](#semantic-scholar) below).
@@ -56,8 +62,10 @@ Frequently useful settings:
 | ------------------------ | ----------------------------- | ------------------------------------------- |
 | `RESEARCH_PROVIDER`      | `openalex`                    | Default provider for requests without one   |
 | `OPENALEX_MAILTO`        | *(unset)*                     | Contact address for the OpenAlex polite pool |
+| `OPENALEX_API_KEY`       | *(unset)*                     | Optional authenticated OpenAlex API key      |
 | `SEARCH_PAGES`           | `3`                           | Pages requested per search (capped at 20)   |
 | `SEARCH_PER_PAGE`        | `100`                         | Results per page (capped at 200)            |
+| `RELEVANCE_MIN_SCORE`    | `20`                          | Conservative pre-analysis retention cutoff  |
 | `RESEARCH_DATABASE_PATH` | `papers.db` next to the code  | SQLite file location                        |
 
 `config.py` documents the rest — request timeouts, bounded retry and backoff,
@@ -67,6 +75,9 @@ the concept-pipeline thresholds, and every trend-analysis threshold.
 
 `OPENALEX_MAILTO` is optional but recommended. OpenAlex is free and
 community-funded, and it gives identified traffic better throughput.
+`OPENALEX_API_KEY` is read from the environment when available and sent only
+to OpenAlex as the `api_key` request parameter; its value is never logged or
+returned by the application.
 
 ## Semantic Scholar
 
@@ -106,7 +117,8 @@ respected rather than retried around, and `4xx` never retried.
 
 ```
 app.py                 FastAPI routes and template rendering only
-search_service.py      search -> normalize -> score -> store pipeline
+search_service.py      search -> normalize -> relevance -> score -> store pipeline
+relevance.py           explainable query-match score and conservative filter
 dashboard_service.py   four independent dashboard sections
 scoring.py             research score (citations, relevance, recency, completeness)
 trends.py              share-based trend analysis over the stored corpus
@@ -125,6 +137,23 @@ providers/
 
 Adding a provider means adding one module with a `fetch_raw` method and one
 registry entry. Normalization, scoring, storage, and the dashboard are shared.
+
+## Relevance methodology
+
+Each retrieved paper receives a separate 0..100 Relevance Score: title-term
+coverage (35 points), abstract-term coverage (20), concept-term coverage (20),
+an exact normalized phrase in the title (15), and an exact normalized phrase
+in the abstract (10). Matching is case- and punctuation-insensitive and handles
+simple English plurals. The result includes a High/Medium/Low level and a list
+of the signals that matched.
+
+Scores below 20 are excluded before Research Score and persistence. The cutoff
+is deliberately low to favour recall. Broad-only matches such as "risk
+management" without the query's more distinctive term are capped at Low
+confidence, but are retained if their combined evidence reaches 20. This is a
+transparent thesis heuristic, not a claim of semantic understanding; the
+cutoff and display bands can be changed through the environment settings in
+`.env.example`.
 
 ## Tests
 

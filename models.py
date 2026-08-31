@@ -18,6 +18,9 @@ doi             str|None   Bare DOI, e.g. "10.1234/abcd" (no URL prefix).
 url             str|None   Landing page for the paper, when known.
 source          str        Provider name, e.g. "openalex".
 research_score  int        Filled in by scoring.py, 0 until then.
+relevance_score int        Query-match score filled in by relevance.py.
+relevance_level str|None   High / Medium / Low after relevance analysis.
+relevance_reasons list[str] Explainable matching signals.
 keyword         str|None   Search term this paper was collected for.
 
 Nothing downstream is allowed to assume a field is present but unset: every
@@ -40,6 +43,9 @@ PAPER_FIELDS = (
     "url",
     "source",
     "research_score",
+    "relevance_score",
+    "relevance_level",
+    "relevance_reasons",
     "keyword",
 )
 
@@ -158,6 +164,29 @@ def normalize_doi(value):
     return doi or None
 
 
+def normalize_relevance_reasons(values):
+    """Return a clean list of explanation strings."""
+
+    if not values:
+        return []
+
+    if isinstance(values, str):
+        values = [values]
+
+    if not isinstance(values, (list, tuple, set, frozenset)):
+        return []
+
+    reasons = []
+
+    for value in values:
+        reason = clean_text(value)
+
+        if reason and reason not in reasons:
+            reasons.append(reason)
+
+    return reasons
+
+
 def normalize_paper(raw, source, keyword=None):
     """Coerce a provider dict into the canonical structure.
 
@@ -194,6 +223,11 @@ def normalize_paper(raw, source, keyword=None):
         "url": clean_text(raw.get("url")),
         "source": clean_text(source) or "unknown",
         "research_score": coerce_int(raw.get("research_score", 0), default=0),
+        "relevance_score": coerce_int(raw.get("relevance_score", 0), default=0),
+        "relevance_level": clean_text(raw.get("relevance_level")),
+        "relevance_reasons": normalize_relevance_reasons(
+            raw.get("relevance_reasons")
+        ),
         "keyword": clean_text(raw.get("keyword") or keyword),
     }
 

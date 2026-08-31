@@ -10,6 +10,7 @@ recreated, and no row is ever deleted.  An existing ``papers.db`` from any
 earlier version of this application opens, migrates and keeps every row.
 """
 
+import json
 from datetime import datetime, timezone
 
 from sqlalchemy import (
@@ -27,7 +28,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 import config
 from concepts import concepts_from_json, concepts_to_json
-from models import PAPER_FIELDS, coerce_int, coerce_year
+from models import PAPER_FIELDS, coerce_int, coerce_year, normalize_relevance_reasons
 
 
 DATABASE_URL = config.DATABASE_URL
@@ -86,6 +87,11 @@ class Paper(Base):
 
     research_score = Column(Integer, default=0, index=True)
 
+    #: Query-match analysis, deliberately separate from research_score.
+    relevance_score = Column(Integer, default=0)
+    relevance_level = Column(String)
+    relevance_reasons = Column(Text)
+
     #: JSON array of canonical concept dicts.
     concepts = Column(Text)
 
@@ -138,6 +144,11 @@ class Paper(Base):
             "url": self.url,
             "source": self.source or config.DEFAULT_PROVIDER,
             "research_score": self.research_score or 0,
+            "relevance_score": self.relevance_score or 0,
+            "relevance_level": self.relevance_level,
+            "relevance_reasons": _relevance_reasons_from_json(
+                self.relevance_reasons
+            ),
             "keyword": self.keyword,
         }
 
@@ -156,6 +167,9 @@ _ADDED_COLUMNS = (
     ("url", "ALTER TABLE papers ADD COLUMN url VARCHAR"),
     ("created_at", "ALTER TABLE papers ADD COLUMN created_at DATETIME"),
     ("updated_at", "ALTER TABLE papers ADD COLUMN updated_at DATETIME"),
+    ("relevance_score", "ALTER TABLE papers ADD COLUMN relevance_score INTEGER DEFAULT 0"),
+    ("relevance_level", "ALTER TABLE papers ADD COLUMN relevance_level VARCHAR"),
+    ("relevance_reasons", "ALTER TABLE papers ADD COLUMN relevance_reasons TEXT"),
 )
 
 
@@ -270,6 +284,24 @@ def _authors_text(authors):
     return ", ".join(str(name).strip() for name in authors if str(name).strip()) or None
 
 
+def _relevance_reasons_from_json(value):
+    if not value:
+        return []
+
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return normalize_relevance_reasons(value)
+
+    if not isinstance(value, str):
+        return []
+
+    try:
+        loaded = json.loads(value)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        return []
+
+    return normalize_relevance_reasons(loaded)
+
+
 def _apply(row, paper, keyword):
     """Copy canonical paper fields onto an ORM row.
 
@@ -306,6 +338,22 @@ def _apply(row, paper, keyword):
         row.research_score = incoming_score
     elif row.research_score is None:
         row.research_score = 0
+
+    incoming_relevance = coerce_int(paper.get("relevance_score"), 0)
+
+    if incoming_relevance > 0:
+        row.relevance_score = min(incoming_relevance, 100)
+    elif row.relevance_score is None:
+        row.relevance_score = 0
+
+    row.relevance_level = better(paper.get("relevance_level"), row.relevance_level)
+
+    reasons = normalize_relevance_reasons(paper.get("relevance_reasons"))
+
+    if reasons:
+        row.relevance_reasons = json.dumps(reasons, ensure_ascii=False)
+    elif not row.relevance_reasons:
+        row.relevance_reasons = json.dumps([])
 
     concepts = paper.get("concepts")
 

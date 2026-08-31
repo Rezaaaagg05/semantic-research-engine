@@ -15,6 +15,7 @@ finds nothing returns an empty ``SearchResult`` -- it is not an error.
 from collections import namedtuple
 
 import database
+import relevance
 import scoring
 from providers import (
     ProviderError,
@@ -34,6 +35,8 @@ SearchResult = namedtuple(
     (
         "papers",          # list[dict] canonical papers, scored and ranked
         "provider",        # str name of the provider that ran
+        "retrieved",       # int candidates returned by the provider
+        "excluded",        # int candidates rejected as clearly irrelevant
         "inserted",        # int rows newly stored
         "updated",         # int existing rows refreshed
         "total",           # int total papers in the database after this search
@@ -121,8 +124,10 @@ def run_search(
         per_page=per_page,
     )
 
+    relevance_batch = relevance.filter_papers(papers, keyword)
+
     papers = scoring.score_papers(
-        papers,
+        relevance_batch.retained,
         keyword=keyword,
         reference_year=reference_year,
     )
@@ -141,6 +146,8 @@ def run_search(
     return SearchResult(
         papers=papers,
         provider=provider_instance.name,
+        retrieved=relevance_batch.retrieved,
+        excluded=len(relevance_batch.excluded),
         inserted=inserted,
         updated=updated,
         total=total,

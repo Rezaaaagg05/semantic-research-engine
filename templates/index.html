@@ -236,6 +236,27 @@
         }
 
 
+        .relevance {
+
+            font-weight: bold;
+
+            color: #047857;
+        }
+
+
+        .relevance-reasons,
+        .abstract {
+
+            color: #475569;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+
+            margin: 10px 0 0 0;
+        }
+
+
         .authors {
 
             font-size: 14px;
@@ -382,8 +403,9 @@
 
         <p class="result-bar">
 
-            Found {{ result.papers | length }} paper{{ '' if result.papers | length == 1 else 's' }}
+            Retrieved {{ result.retrieved }} candidate{{ '' if result.retrieved == 1 else 's' }}
             via {{ result.provider }} &mdash;
+            retained {{ result.papers | length }}, excluded {{ result.excluded }} as low evidence;
             {{ result.inserted }} new, {{ result.updated }} updated,
             {{ result.total }} stored in total.
 
@@ -444,6 +466,14 @@
                         {{ paper.research_score or 0 }}/100
                     </span>
 
+                    |
+
+                    <span class="relevance">
+                        Relevance:
+                        {{ paper.relevance_score or 0 }}/100
+                        ({{ paper.relevance_level or "Low" }})
+                    </span>
+
                     {% if paper.source %}
 
                         |
@@ -464,6 +494,25 @@
 
                         {{ paper.authors | join(", ") }}
 
+                    </p>
+
+                {% endif %}
+
+
+                {% if paper.abstract %}
+
+                    <p class="abstract">
+                        {{ paper.abstract[:400] }}{{ "..." if paper.abstract | length > 400 else "" }}
+                    </p>
+
+                {% endif %}
+
+
+                {% if paper.relevance_reasons %}
+
+                    <p class="relevance-reasons">
+                        <strong>Why it matched:</strong>
+                        {{ paper.relevance_reasons | join("; ") }}
                     </p>
 
                 {% endif %}

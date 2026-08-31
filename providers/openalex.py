@@ -1,8 +1,8 @@
 """
 OpenAlex provider -- the default data source.
 
-OpenAlex is free, requires no API key, and asks only that clients identify
-themselves.  Setting OPENALEX_MAILTO puts requests in the "polite pool", which
+OpenAlex has a public API and optionally accepts an API key for authenticated
+traffic. Setting OPENALEX_MAILTO puts requests in the "polite pool", which
 OpenAlex serves with higher throughput; it is optional and never required.
 
 API reference: https://docs.openalex.org/api-entities/works
@@ -154,8 +154,9 @@ class OpenAlexProvider(Provider):
 
     def configuration_hint(self):
         return (
-            "OpenAlex needs no API key. Set OPENALEX_MAILTO to your email "
-            "address to use the faster polite pool."
+            "OpenAlex needs no API key for public access. Set OPENALEX_API_KEY "
+            "when authenticated access is available, or OPENALEX_MAILTO to "
+            "use the faster polite pool."
         )
 
     def fetch_raw(self, keyword, pages=None, per_page=None, **kwargs):
@@ -193,6 +194,9 @@ class OpenAlexProvider(Provider):
             if config.OPENALEX_MAILTO:
                 params["mailto"] = config.OPENALEX_MAILTO
 
+            if config.OPENALEX_API_KEY:
+                params["api_key"] = config.OPENALEX_API_KEY
+
             try:
                 payload = get_json(
                     BASE_URL,
@@ -201,6 +205,9 @@ class OpenAlexProvider(Provider):
                     timeout=config.REQUEST_TIMEOUT,
                     session=self._session,
                     sleep=self._sleep,
+                    retry_rate_limited=True,
+                    rate_limit_retries=config.RATE_LIMIT_RETRIES,
+                    max_rate_limit_wait=config.MAX_RATE_LIMIT_WAIT_SECONDS,
                 )
 
             except ProviderError as error:

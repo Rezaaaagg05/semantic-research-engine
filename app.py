@@ -200,6 +200,8 @@ def api_search(
     return {
         "keyword": keyword,
         "provider": result.provider,
+        "retrieved": result.retrieved,
+        "excluded": result.excluded,
         "count": len(result.papers),
         "inserted": result.inserted,
         "updated": result.updated,
